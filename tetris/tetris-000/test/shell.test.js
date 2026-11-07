@@ -34,6 +34,27 @@ test('shell renders and Ctrl+C restores the terminal', () => {
   assert.equal(tty.signals.listenerCount('SIGTERM'), 0);
 });
 
+test('arrow key input redraws movement and stops at both walls', () => {
+  const tty = terminal();
+  const stop = startShell(tty);
+  try {
+    for (const name of ['left', 'right']) {
+      for (let i = 0; i < 10; i++) tty.input.write(name === 'left' ? '\x1b[D' : '\x1b[C');
+      const frame = tty.screen().split('\x1b[H').at(-1);
+      const rows = frame.split('\r\n');
+      assert.equal(rows.length, 22);
+      assert.equal(frame.match(/\[\]/g).length, 4);
+      if (name === 'left') assert.ok(rows.slice(1, 3).some((row) => row.startsWith('|[]')));
+      else assert.ok(rows.slice(1, 3).some((row) => row.slice(19, 22) === '[]|'));
+      const before = tty.screen();
+      tty.input.emit('keypress', '', { name });
+      assert.equal(tty.screen(), before);
+    }
+  } finally {
+    stop();
+  }
+});
+
 test('termination signals also restore the previous raw mode', () => {
   const tty = terminal();
   tty.input.isRaw = true;

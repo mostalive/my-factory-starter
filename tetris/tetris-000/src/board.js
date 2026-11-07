@@ -1,0 +1,19 @@
+import { BOARD_WIDTH, BOARD_HEIGHT } from './render.js';
+
+export function createBoard() {
+  return Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(0));
+}
+
+export function collides(board, piece) {
+  return piece.shape.some((row, dy) => row.some((cell, dx) => {
+    if (!cell) return false;
+    const x = piece.x + dx;
+    const y = piece.y + dy;
+    return x < 0 || x >= BOARD_WIDTH || y < 0 || y >= BOARD_HEIGHT || Boolean(board[y][x]);
+  }));
+}
+
+export function movePiece(board, piece, dx) {
+  const moved = { ...piece, x: piece.x + dx };
+  return collides(board, moved) ? piece : moved;
+}
