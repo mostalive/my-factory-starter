@@ -23,6 +23,12 @@ export function dropPiece(board, piece) {
   return null;
 }
 
+// Drop to the landing position and lock immediately, just like repeated soft drops.
+export function hardDropPiece(board, piece) {
+  while (piece) piece = dropPiece(board, piece);
+  return null;
+}
+
 // Compact surviving rows downward and return the number cleared.
 export function clearRows(board) {
   const remaining = board.filter((row) => !row.every(Boolean));

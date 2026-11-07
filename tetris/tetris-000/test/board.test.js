@@ -1,8 +1,23 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clearRows, createBoard, collides, dropPiece, movePiece, rotatePiece } from '../src/board.js';
+import { clearRows, createBoard, collides, dropPiece, hardDropPiece, movePiece, rotatePiece } from '../src/board.js';
 import { createPiece, SHAPES } from '../src/pieces.js';
 import { BOARD_WIDTH, BOARD_HEIGHT, renderGame } from '../src/render.js';
+
+test('hard drop matches repeated soft drops for every shape above a stack', () => {
+  for (let i = 0; i < 7; i++) {
+    const board = createBoard();
+    board[15][4] = 7;
+    const expected = structuredClone(board);
+    const piece = createPiece(() => i / 7);
+    const snapshot = structuredClone(piece);
+    let falling = piece;
+    while (falling) falling = dropPiece(expected, falling);
+    assert.equal(hardDropPiece(board, piece), null);
+    assert.deepEqual(board, expected);
+    assert.deepEqual(piece, snapshot);
+  }
+});
 
 test('boards have independent empty rows', () => {
   const board = createBoard();

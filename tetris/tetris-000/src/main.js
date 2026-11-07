@@ -2,7 +2,7 @@ import { emitKeypressEvents } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { renderGame } from './render.js';
 import { createPiece } from './pieces.js';
-import { clearRows, collides, createBoard, dropPiece, movePiece, rotatePiece } from './board.js';
+import { clearRows, collides, createBoard, dropPiece, hardDropPiece, movePiece, rotatePiece } from './board.js';
 
 export function startShell({ input = process.stdin, output = process.stdout, signals = process, clock = globalThis } = {}) {
   if (!input.isTTY || !output.isTTY) {
@@ -14,8 +14,9 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
   let gravityTimer;
   const board = createBoard();
   let activePiece = createPiece();
+  let nextPiece = createPiece();
   let score = 0;
-  const draw = () => output.write(`\x1b[H${renderGame({ board, activePiece, score })}`);
+  const draw = () => output.write(`\x1b[H${renderGame({ board, activePiece, nextPiece, score })}`);
   const stop = () => {
     if (stopped) return;
     stopped = true;
@@ -28,21 +29,22 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
     input.pause();
     output.write('\x1b[?25h\x1b[?1049l');
   };
-  const drop = () => {
+  const drop = (hard = false) => {
     if (stopped || !activePiece) return;
-    activePiece = dropPiece(board, activePiece);
+    activePiece = hard ? hardDropPiece(board, activePiece) : dropPiece(board, activePiece);
     if (!activePiece) {
       // Standard single/double/triple/Tetris awards, without level multipliers.
       score += [0, 100, 300, 500, 800][clearRows(board)];
-      const next = createPiece();
       // Stop advancing a full board until game-over controls are added.
-      activePiece = collides(board, next) ? null : next;
+      activePiece = collides(board, nextPiece) ? null : nextPiece;
+      nextPiece = createPiece();
     }
     draw();
   };
   const onKey = (_text, key) => {
     if (key?.ctrl && key.name === 'c') return stop();
     if (key?.name === 'down') return drop();
+    if (key?.name === 'space') return drop(true);
     if (activePiece && ['left', 'right', 'up'].includes(key?.name)) {
       const moved = key.name === 'up'
         ? rotatePiece(board, activePiece)
