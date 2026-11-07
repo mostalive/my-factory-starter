@@ -1,5 +1,6 @@
 import { emitKeypressEvents } from 'node:readline';
 import { pathToFileURL } from 'node:url';
+import { renderGame } from './render.js';
 
 export function startShell({ input = process.stdin, output = process.stdout, signals = process } = {}) {
   if (!input.isTTY || !output.isTTY) {
@@ -31,7 +32,7 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
   input.setRawMode(true);
   input.resume();
   output.write('\x1b[?1049h\x1b[?25l\x1b[2J\x1b[H');
-  output.write('TETRIS\r\n\r\nTerminal game ready.\r\nCtrl+C to quit.');
+  output.write(renderGame());
   return stop;
 }
 
