@@ -75,6 +75,46 @@ test('Up arrow rotates the piece and preserves the compact display', () => {
   }
 });
 
+test('gravity and soft drop lower pieces, lock them, and spawn another piece', () => {
+  const tty = terminal();
+  let tick;
+  let cleared = false;
+  const clock = {
+    setInterval(callback, delay) {
+      assert.equal(delay, 700);
+      tick = callback;
+      return 123;
+    },
+    clearInterval(timer) {
+      assert.equal(timer, 123);
+      cleared = true;
+    },
+  };
+  const stop = startShell({ ...tty, clock });
+  const frame = () => tty.screen().split('\x1b[H').at(-1);
+  try {
+    const initial = frame();
+    tick();
+    const afterGravity = frame().split('\r\n');
+    assert.equal(afterGravity[1].slice(1, 21).trim(), '');
+    assert.equal(afterGravity[2].slice(0, 22), initial.split('\r\n')[1].slice(0, 22));
+    tty.input.write('\x1b[B');
+    assert.equal(frame().split('\r\n')[3].slice(0, 22), afterGravity[2].slice(0, 22));
+    for (let step = 0; step < 18; step++) tick();
+    assert.equal(frame().match(/\[\]/g).length, 8);
+    assert.equal(frame().split('\r\n').length, 22);
+    assert.match(frame(), /Down: soft drop/);
+    assert.ok(frame().split('\r\n')[20].includes('[]'));
+  } finally {
+    stop();
+  }
+  assert.equal(cleared, true);
+  const stoppedScreen = tty.screen();
+  tick();
+  tty.input.write('\x1b[B');
+  assert.equal(tty.screen(), stoppedScreen);
+});
+
 test('termination signals also restore the previous raw mode', () => {
   const tty = terminal();
   tty.input.isRaw = true;

@@ -3,7 +3,7 @@ export const BOARD_HEIGHT = 20;
 
 export function renderGame({ score = 0, activePiece = null, board = [] } = {}) {
   const border = `+${'-'.repeat(BOARD_WIDTH * 2)}+`;
-  const sidebar = ['TETRIS', '', `Score: ${score}`, '', 'Controls', 'Left/Right: move', 'Up: rotate', 'Ctrl+C to quit'];
+  const sidebar = ['TETRIS', '', `Score: ${score}`, '', 'Controls', 'Left/Right: move', 'Up: rotate', 'Down: soft drop', 'Ctrl+C to quit'];
   const rows = [border];
   for (let y = 0; y < BOARD_HEIGHT; y++) {
     let cells = '';

@@ -13,6 +13,16 @@ export function collides(board, piece) {
   }));
 }
 
+// Return the lowered piece, or null once it has settled into the board.
+export function dropPiece(board, piece) {
+  const lowered = { ...piece, y: piece.y + 1 };
+  if (!collides(board, lowered)) return lowered;
+  piece.shape.forEach((row, dy) => row.forEach((cell, dx) => {
+    if (cell) board[piece.y + dy][piece.x + dx] = cell;
+  }));
+  return null;
+}
+
 export function rotatePiece(board, piece) {
   const shape = piece.shape[0].map((_, x) => piece.shape.map((row) => row[x]).reverse());
   const rotated = { ...piece, shape };

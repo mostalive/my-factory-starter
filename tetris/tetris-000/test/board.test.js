@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createBoard, collides, movePiece, rotatePiece } from '../src/board.js';
+import { createBoard, collides, dropPiece, movePiece, rotatePiece } from '../src/board.js';
 import { createPiece, SHAPES } from '../src/pieces.js';
 import { BOARD_WIDTH, BOARD_HEIGHT, renderGame } from '../src/render.js';
 
@@ -95,6 +95,37 @@ test('rotation ignores empty cells in the rotated shape', () => {
   const rotated = rotatePiece(board, piece);
   assert.notEqual(rotated, piece);
   assert.deepEqual(rotated.shape, [[1, 0], [1, 1], [1, 0]]);
+});
+
+test('all seven pieces descend, lock at the floor, and leave other cells untouched', () => {
+  for (let i = 0; i < 7; i++) {
+    const board = createBoard();
+    let piece = createPiece(() => i / 7);
+    const original = structuredClone(piece);
+    piece = dropPiece(board, piece);
+    assert.equal(piece.y, 1);
+    assert.deepEqual(board, createBoard());
+    assert.deepEqual(original, createPiece(() => i / 7));
+    while (piece.y + piece.shape.length < BOARD_HEIGHT) piece = dropPiece(board, piece);
+    assert.equal(dropPiece(board, piece), null);
+    assert.equal(board.flat().filter(Boolean).length, 4);
+    for (let y = 0; y < piece.shape.length; y++) {
+      for (let x = 0; x < piece.shape[y].length; x++) {
+        assert.equal(board[piece.y + y][piece.x + x], piece.shape[y][x]);
+      }
+    }
+  }
+});
+
+test('dropping onto settled blocks locks above them without overwriting them', () => {
+  const board = createBoard();
+  board[10][4] = 7;
+  const piece = { type: 'O', shape: SHAPES.O, x: 4, y: 8 };
+  assert.equal(dropPiece(board, piece), null);
+  assert.deepEqual(board[8].slice(4, 6), [1, 1]);
+  assert.deepEqual(board[9].slice(4, 6), [1, 1]);
+  assert.equal(board[10][4], 7);
+  assert.equal(board.flat().filter(Boolean).length, 5);
 });
 
 test('settled cells and active cells both render within the existing display', () => {
