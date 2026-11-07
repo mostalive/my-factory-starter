@@ -9,4 +9,4 @@
 - [x] Add full-row clearing and score updates, with tests for collisions, locking, and clearing multiple rows.
 - [x] Add hard drop and a next-piece preview, updating the visible controls without exceeding 24 terminal rows.
 - [x] Add pause/resume, game-over detection, and restart controls, with all status messages inside the existing display.
-- [ ] Verify the complete game through automated tests and terminal smoke checks, fix display or input issues, and document startup and controls.
+- [x] Verify the complete game through automated tests and terminal smoke checks, fix display or input issues, and document startup and controls.
