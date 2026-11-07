@@ -1,12 +1,15 @@
 export const BOARD_WIDTH = 10;
 export const BOARD_HEIGHT = 20;
 
-export function renderGame({ score = 0, activePiece = null, nextPiece = null, board = [] } = {}) {
+export function renderGame({ score = 0, activePiece = null, nextPiece = null, board = [], status = 'running' } = {}) {
   const border = `+${'-'.repeat(BOARD_WIDTH * 2)}+`;
   const preview = Array.from({ length: 2 }, (_, y) =>
     Array.from({ length: 4 }, (_, x) => nextPiece?.shape[y]?.[x] ? '[]' : '  ').join(''));
   const sidebar = ['TETRIS', '', `Score: ${score}`, '', 'Next:', ...preview, '',
-    'Controls', 'Left/Right: move', 'Up: rotate', 'Down: soft drop', 'Space: hard drop', 'Ctrl+C to quit'];
+    'Controls', 'Left/Right: move', 'Up: rotate', 'Down: soft drop', 'Space: hard drop',
+    'P: pause/resume', 'R: restart', 'Ctrl+C to quit', '',
+    status === 'over' ? 'GAME OVER' : status === 'paused' ? 'PAUSED' : '',
+    status === 'over' ? 'R to play again' : status === 'paused' ? 'P to resume' : ''];
   const rows = [border];
   for (let y = 0; y < BOARD_HEIGHT; y++) {
     let cells = '';

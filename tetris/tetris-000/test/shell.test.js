@@ -136,6 +136,9 @@ test('completed rows update the displayed score cumulatively without adding disp
       assert.equal(frame().match(/\[\]/g).length, 8);
       assert.equal(frame().split('\r\n').length, 22);
     }
+    tty.input.write('r');
+    assert.match(frame(), /Score: 0/);
+    assert.equal(frame().match(/\[\]/g).length, 8);
   } finally {
     stop();
   }
@@ -161,6 +164,72 @@ test('Space locks immediately and promotes the preview, generating one new previ
     assert.match(rows().join('\n'), /Space: hard drop/);
     assert.equal(rows().length, 22);
     assert.ok(rows().every((row) => row.length <= 80));
+  } finally {
+    stop();
+  }
+});
+
+test('pause freezes gravity and gameplay input, and resume continues the same piece', () => {
+  const tty = terminal();
+  let tick;
+  const clock = { setInterval(callback) { tick = callback; return 1; }, clearInterval() {} };
+  const stop = startShell({ ...tty, clock });
+  const frame = () => tty.screen().split('\x1b[H').at(-1);
+  try {
+    const initial = frame();
+    tty.input.write('p');
+    assert.match(frame(), /PAUSED/);
+    const paused = tty.screen();
+    tick();
+    for (const name of ['left', 'right', 'up', 'down', 'space']) {
+      tty.input.emit('keypress', '', { name });
+    }
+    assert.equal(tty.screen(), paused);
+    tty.input.write('p');
+    assert.equal(frame(), initial);
+    tick();
+    assert.notEqual(frame(), initial);
+    tty.input.write('p');
+    tty.input.write('r');
+    assert.doesNotMatch(frame(), /PAUSED/);
+    assert.match(frame(), /Score: 0/);
+    assert.equal(frame().match(/\[\]/g).length, 8);
+  } finally {
+    stop();
+  }
+});
+
+test('blocked spawn ends play, ignores gameplay, and restart clears the board', (t) => {
+  t.mock.method(Math, 'random', () => 1 / 7); // Stack ten O pieces in the spawn columns.
+  const tty = terminal();
+  let tick;
+  const clock = { setInterval(callback) { tick = callback; return 1; }, clearInterval() {} };
+  const stop = startShell({ ...tty, clock });
+  const frame = () => tty.screen().split('\x1b[H').at(-1);
+  try {
+    const initial = frame();
+    for (let i = 0; i < 9; i++) {
+      tty.input.write(' ');
+      assert.doesNotMatch(frame(), /GAME OVER/);
+    }
+    tty.input.write(' ');
+    assert.match(frame(), /GAME OVER/);
+    assert.match(frame(), /R to play again/);
+    assert.equal(frame().split('\r\n').length, 22);
+    assert.ok(frame().split('\r\n').every((row) => row.length <= 80));
+    const ended = tty.screen();
+    tick();
+    for (const name of ['left', 'right', 'up', 'down', 'space', 'p']) {
+      tty.input.emit('keypress', '', { name });
+    }
+    assert.equal(tty.screen(), ended);
+    tty.input.write('r');
+    assert.equal(frame(), initial);
+    tick();
+    assert.notEqual(frame(), initial);
+    tty.input.write('p');
+    tty.input.emit('keypress', '\x03', { ctrl: true, name: 'c' });
+    assert.equal(tty.input.isRaw, false);
   } finally {
     stop();
   }

@@ -12,11 +12,20 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
   const wasRaw = Boolean(input.isRaw);
   let stopped = false;
   let gravityTimer;
-  const board = createBoard();
+  let board = createBoard();
   let activePiece = createPiece();
   let nextPiece = createPiece();
   let score = 0;
-  const draw = () => output.write(`\x1b[H${renderGame({ board, activePiece, nextPiece, score })}`);
+  let status = 'running';
+  const draw = () => output.write(`\x1b[H${renderGame({ board, activePiece, nextPiece, score, status })}`);
+  const restart = () => {
+    board = createBoard();
+    activePiece = createPiece();
+    nextPiece = createPiece();
+    score = 0;
+    status = 'running';
+    draw();
+  };
   const stop = () => {
     if (stopped) return;
     stopped = true;
@@ -30,19 +39,31 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
     output.write('\x1b[?25h\x1b[?1049l');
   };
   const drop = (hard = false) => {
-    if (stopped || !activePiece) return;
+    if (stopped || status !== 'running' || !activePiece) return;
     activePiece = hard ? hardDropPiece(board, activePiece) : dropPiece(board, activePiece);
     if (!activePiece) {
       // Standard single/double/triple/Tetris awards, without level multipliers.
       score += [0, 100, 300, 500, 800][clearRows(board)];
-      // Stop advancing a full board until game-over controls are added.
-      activePiece = collides(board, nextPiece) ? null : nextPiece;
-      nextPiece = createPiece();
+      if (collides(board, nextPiece)) {
+        activePiece = null;
+        status = 'over';
+      } else {
+        activePiece = nextPiece;
+        nextPiece = createPiece();
+      }
     }
     draw();
   };
   const onKey = (_text, key) => {
     if (key?.ctrl && key.name === 'c') return stop();
+    if (stopped) return;
+    if (key?.name === 'r') return restart();
+    if (key?.name === 'p' && status !== 'over') {
+      status = status === 'paused' ? 'running' : 'paused';
+      draw();
+      return;
+    }
+    if (status !== 'running') return;
     if (key?.name === 'down') return drop();
     if (key?.name === 'space') return drop(true);
     if (activePiece && ['left', 'right', 'up'].includes(key?.name)) {
