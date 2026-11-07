@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createBoard, collides, movePiece } from '../src/board.js';
+import { createBoard, collides, movePiece, rotatePiece } from '../src/board.js';
 import { createPiece, SHAPES } from '../src/pieces.js';
 import { BOARD_WIDTH, BOARD_HEIGHT, renderGame } from '../src/render.js';
 
@@ -52,6 +52,49 @@ test('collision checks ignore empty shape cells and reject vertical bounds', () 
   assert.equal(collides(board, piece), true);
   assert.equal(collides(createBoard(), { ...piece, y: -1 }), true);
   assert.equal(collides(createBoard(), { ...piece, y: BOARD_HEIGHT - 1 }), true);
+});
+
+test('all shapes rotate clockwise without mutation and return after four turns', () => {
+  const board = createBoard();
+  for (let i = 0; i < 7; i++) {
+    const original = createPiece(() => i / 7);
+    const snapshot = structuredClone(original);
+    let piece = rotatePiece(board, original);
+    assert.deepEqual(piece.shape, original.shape[0].map((_, x) => original.shape.map((row) => row[x]).reverse()));
+    assert.equal(piece.x, original.x);
+    assert.equal(piece.y, original.y);
+    assert.equal(piece.shape.flat().filter(Boolean).length, 4);
+    assert.equal(collides(board, piece), false);
+    for (let turn = 1; turn < 4; turn++) piece = rotatePiece(board, piece);
+    assert.deepEqual(piece, original);
+    assert.deepEqual(original, snapshot);
+  }
+});
+
+test('rotation rejects walls, the floor, and settled blocks without changing state', () => {
+  const vertical = rotatePiece(createBoard(), createPiece(() => 0));
+  for (const x of [BOARD_WIDTH - 1, -1]) {
+    const piece = { ...vertical, x };
+    assert.equal(rotatePiece(createBoard(), piece), piece);
+  }
+  const low = { ...createPiece(() => 0), y: BOARD_HEIGHT - 1 };
+  assert.equal(rotatePiece(createBoard(), low), low);
+  const board = createBoard();
+  const piece = createPiece(() => 0);
+  board[1][piece.x] = 1;
+  const snapshot = structuredClone({ board, piece });
+  assert.equal(collides(board, piece), false);
+  assert.equal(rotatePiece(board, piece), piece);
+  assert.deepEqual({ board, piece }, snapshot);
+});
+
+test('rotation ignores empty cells in the rotated shape', () => {
+  const board = createBoard();
+  const piece = { type: 'T', shape: SHAPES.T, x: 3, y: 4 };
+  board[6][4] = 1;
+  const rotated = rotatePiece(board, piece);
+  assert.notEqual(rotated, piece);
+  assert.deepEqual(rotated.shape, [[1, 0], [1, 1], [1, 0]]);
 });
 
 test('settled cells and active cells both render within the existing display', () => {

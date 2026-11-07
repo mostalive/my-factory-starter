@@ -2,7 +2,7 @@ import { emitKeypressEvents } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { renderGame } from './render.js';
 import { createPiece } from './pieces.js';
-import { createBoard, movePiece } from './board.js';
+import { createBoard, movePiece, rotatePiece } from './board.js';
 
 export function startShell({ input = process.stdin, output = process.stdout, signals = process } = {}) {
   if (!input.isTTY || !output.isTTY) {
@@ -27,8 +27,10 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
   };
   const onKey = (_text, key) => {
     if (key?.ctrl && key.name === 'c') return stop();
-    if (key?.name === 'left' || key?.name === 'right') {
-      const moved = movePiece(board, activePiece, key.name === 'left' ? -1 : 1);
+    if (['left', 'right', 'up'].includes(key?.name)) {
+      const moved = key.name === 'up'
+        ? rotatePiece(board, activePiece)
+        : movePiece(board, activePiece, key.name === 'left' ? -1 : 1);
       if (moved !== activePiece) {
         activePiece = moved;
         draw();

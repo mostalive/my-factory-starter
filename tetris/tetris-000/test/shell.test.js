@@ -55,6 +55,26 @@ test('arrow key input redraws movement and stops at both walls', () => {
   }
 });
 
+test('Up arrow rotates the piece and preserves the compact display', () => {
+  const tty = terminal();
+  const stop = startShell(tty);
+  try {
+    const initial = tty.screen().split('\x1b[H').at(-1);
+    assert.match(initial, /Up: rotate/);
+    for (let turn = 0; turn < 4; turn++) {
+      const before = tty.screen();
+      tty.input.write('\x1b[A');
+      assert.notEqual(tty.screen(), before);
+      const frame = tty.screen().split('\x1b[H').at(-1);
+      assert.equal(frame.split('\r\n').length, 22);
+      assert.equal(frame.match(/\[\]/g).length, 4);
+    }
+    assert.equal(tty.screen().split('\x1b[H').at(-1), initial);
+  } finally {
+    stop();
+  }
+});
+
 test('termination signals also restore the previous raw mode', () => {
   const tty = terminal();
   tty.input.isRaw = true;

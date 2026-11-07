@@ -13,6 +13,12 @@ export function collides(board, piece) {
   }));
 }
 
+export function rotatePiece(board, piece) {
+  const shape = piece.shape[0].map((_, x) => piece.shape.map((row) => row[x]).reverse());
+  const rotated = { ...piece, shape };
+  return collides(board, rotated) ? piece : rotated;
+}
+
 export function movePiece(board, piece, dx) {
   const moved = { ...piece, x: piece.x + dx };
   return collides(board, moved) ? piece : moved;
