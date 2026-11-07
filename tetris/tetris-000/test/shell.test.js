@@ -21,6 +21,7 @@ test('shell renders and Ctrl+C restores the terminal', () => {
   const stop = startShell(tty);
   assert.equal(tty.input.isRaw, true);
   assert.match(tty.screen(), /TETRIS/);
+  assert.equal(tty.screen().match(/\[\]/g).length, 4);
   assert.match(tty.screen(), /Ctrl\+C to quit/);
   tty.input.emit('keypress', '\x03', { ctrl: true, name: 'c' });
   assert.equal(tty.input.isRaw, false);
