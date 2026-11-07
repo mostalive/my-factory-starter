@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createBoard, collides, dropPiece, movePiece, rotatePiece } from '../src/board.js';
+import { clearRows, createBoard, collides, dropPiece, movePiece, rotatePiece } from '../src/board.js';
 import { createPiece, SHAPES } from '../src/pieces.js';
 import { BOARD_WIDTH, BOARD_HEIGHT, renderGame } from '../src/render.js';
 
@@ -136,4 +136,38 @@ test('settled cells and active cells both render within the existing display', (
   assert.equal(rows[20].slice(0, 3), '|[]');
   assert.equal(rows.join('').match(/\[\]/g).length, 5);
   assert.match(rows.join('\n'), /Left\/Right: move/);
+});
+
+test('clearing one through four rows compacts survivors and adds independent empty rows', () => {
+  for (const count of [1, 2, 3, 4]) {
+    const board = createBoard();
+    board[10][2] = 7;
+    board[19][8] = 3;
+    // Include separated full rows to exercise compaction, not just a bottom run.
+    for (let i = 0; i < count; i++) board[11 + i * 2].fill(1);
+    assert.equal(clearRows(board), count);
+    assert.equal(board.length, BOARD_HEIGHT);
+    assert.equal(board[10 + count][2], 7);
+    assert.equal(board[19][8], 3);
+    assert.equal(board.flat().filter(Boolean).length, 2);
+    assert.ok(board.slice(0, count).every((row) => row.every((cell) => cell === 0)));
+    board[0][0] = 1;
+    assert.equal(board[1][0], 0);
+    const snapshot = structuredClone(board);
+    assert.equal(clearRows(board), 0);
+    assert.deepEqual(board, snapshot);
+  }
+});
+
+test('locking completes two rows which clear before the next spawn', () => {
+  const board = createBoard();
+  board[18].fill(1);
+  board[19].fill(1);
+  for (const y of [18, 19]) board[y][4] = board[y][5] = 0;
+  const piece = { type: 'O', shape: SHAPES.O, x: 4, y: 18 };
+  assert.equal(collides(board, piece), false);
+  assert.equal(dropPiece(board, piece), null);
+  assert.equal(clearRows(board), 2);
+  assert.deepEqual(board, createBoard());
+  assert.equal(collides(board, createPiece()), false);
 });

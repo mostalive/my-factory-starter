@@ -115,6 +115,32 @@ test('gravity and soft drop lower pieces, lock them, and spawn another piece', (
   assert.equal(tty.screen(), stoppedScreen);
 });
 
+test('completed rows update the displayed score cumulatively without adding display rows', (t) => {
+  t.mock.method(Math, 'random', () => 1 / 7); // Always spawn O pieces.
+  const tty = terminal();
+  const clock = { setInterval() { return 1; }, clearInterval() {} };
+  const stop = startShell({ ...tty, clock });
+  const frame = () => tty.screen().split('\x1b[H').at(-1);
+  try {
+    for (let round = 1; round <= 2; round++) {
+      for (const x of [0, 2, 4, 6, 8]) {
+        const direction = x < 4 ? 'left' : 'right';
+        for (let step = 0; step < Math.abs(x - 4); step++) {
+          tty.input.emit('keypress', '', { name: direction });
+        }
+        for (let step = 0; step < 19; step++) {
+          tty.input.emit('keypress', '', { name: 'down' });
+        }
+      }
+      assert.match(frame(), new RegExp(`Score: ${round * 300}`));
+      assert.equal(frame().match(/\[\]/g).length, 4);
+      assert.equal(frame().split('\r\n').length, 22);
+    }
+  } finally {
+    stop();
+  }
+});
+
 test('termination signals also restore the previous raw mode', () => {
   const tty = terminal();
   tty.input.isRaw = true;

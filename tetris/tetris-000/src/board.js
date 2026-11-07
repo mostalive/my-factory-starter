@@ -23,6 +23,16 @@ export function dropPiece(board, piece) {
   return null;
 }
 
+// Compact surviving rows downward and return the number cleared.
+export function clearRows(board) {
+  const remaining = board.filter((row) => !row.every(Boolean));
+  const cleared = BOARD_HEIGHT - remaining.length;
+  board.splice(0, board.length,
+    ...Array.from({ length: cleared }, () => Array(BOARD_WIDTH).fill(0)),
+    ...remaining);
+  return cleared;
+}
+
 export function rotatePiece(board, piece) {
   const shape = piece.shape[0].map((_, x) => piece.shape.map((row) => row[x]).reverse());
   const rotated = { ...piece, shape };

@@ -2,7 +2,7 @@ import { emitKeypressEvents } from 'node:readline';
 import { pathToFileURL } from 'node:url';
 import { renderGame } from './render.js';
 import { createPiece } from './pieces.js';
-import { collides, createBoard, dropPiece, movePiece, rotatePiece } from './board.js';
+import { clearRows, collides, createBoard, dropPiece, movePiece, rotatePiece } from './board.js';
 
 export function startShell({ input = process.stdin, output = process.stdout, signals = process, clock = globalThis } = {}) {
   if (!input.isTTY || !output.isTTY) {
@@ -14,7 +14,8 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
   let gravityTimer;
   const board = createBoard();
   let activePiece = createPiece();
-  const draw = () => output.write(`\x1b[H${renderGame({ board, activePiece })}`);
+  let score = 0;
+  const draw = () => output.write(`\x1b[H${renderGame({ board, activePiece, score })}`);
   const stop = () => {
     if (stopped) return;
     stopped = true;
@@ -31,6 +32,8 @@ export function startShell({ input = process.stdin, output = process.stdout, sig
     if (stopped || !activePiece) return;
     activePiece = dropPiece(board, activePiece);
     if (!activePiece) {
+      // Standard single/double/triple/Tetris awards, without level multipliers.
+      score += [0, 100, 300, 500, 800][clearRows(board)];
       const next = createPiece();
       // Stop advancing a full board until game-over controls are added.
       activePiece = collides(board, next) ? null : next;
