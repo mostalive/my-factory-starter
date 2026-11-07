@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+factory_dir=$(dirname "$(readlink -f "$0")")
+exec go run "$factory_dir/main.go" "$@"
