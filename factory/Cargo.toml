@@ -1,0 +1,18 @@
+[package]
+name = "factory"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+
+[dev-dependencies]
+cucumber = "0.23"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[features]
+real-agent = []
+
+[[test]]
+name = "features"
+harness = false
