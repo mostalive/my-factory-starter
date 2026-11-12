@@ -6,3 +6,6 @@
 
 # The reference factory binary that bin/get-reference-factory downloads.
 bin/reference-factory
+
+# yx yak tracker state
+.yaks

@@ -10,6 +10,11 @@ struct Args {
 }
 
 fn main() {
-    let _args = Args::parse();
+    let args = Args::parse();
     println!("factory not built yet");
+
+    if !args.seed.exists() {
+        eprintln!("seed file does not exist: {}", args.seed.display());
+        std::process::exit(1);
+    }
 }

@@ -1,7 +1,36 @@
-use cucumber::World as _;
+use cucumber::{World as _, given};
+use std::{fs, io};
+use tempfile::TempDir;
 
 #[derive(Debug, Default, cucumber::World)]
-struct FactoryWorld {}
+struct FactoryWorld {
+    workspace: Option<TempDir>,
+    target: Option<std::path::PathBuf>,
+    seed: Option<std::path::PathBuf>,
+}
+
+#[given("a copy of the factory")]
+fn copy_factory(world: &mut FactoryWorld) -> io::Result<()> {
+    let workspace = tempfile::tempdir()?;
+
+    fs::copy(
+        env!("CARGO_BIN_EXE_factory"),
+        workspace.path().join("factory"),
+    )?;
+
+    world.workspace = Some(workspace);
+    Ok(())
+}
+
+#[given("a new target")]
+fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
+    let workspace = world.workspace.as_ref().unwrap();
+    let target = workspace.path().join("target");
+
+    fs::create_dir(&target)?;
+    world.target = Some(target);
+    Ok(())
+}
 
 #[tokio::main]
 async fn main() {
