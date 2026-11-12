@@ -40,8 +40,7 @@ fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
 
 #[given("a seed describing a game of Tetris")]
 fn create_seed(world: &mut FactoryWorld) -> io::Result<()> {
-    let workspace = world.workspace.as_ref().unwrap();
-    let seed = workspace.path().join("seed.md");
+    let seed = world.root().join("seed.md");
 
     fs::write(&seed, "Build a game of tetris in the terminal.\n")?;
     world.seed = Some(seed);
