@@ -7,8 +7,15 @@ struct FactoryWorld {
     workspace: Option<TempDir>,
     target: Option<std::path::PathBuf>,
     seed: Option<std::path::PathBuf>,
+
+
 }
 
+impl FactoryWorld {
+    fn root(&self) -> &std::path::Path {
+        self.workspace.as_ref().unwrap().path()
+    }
+}
 #[given("a copy of the factory")]
 fn copy_factory(world: &mut FactoryWorld) -> io::Result<()> {
     let workspace = tempfile::tempdir()?;
@@ -24,8 +31,7 @@ fn copy_factory(world: &mut FactoryWorld) -> io::Result<()> {
 
 #[given("a new target")]
 fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
-    let workspace = world.workspace.as_ref().unwrap();
-    let target = workspace.path().join("target");
+    let target = world.root().join("target");
 
     fs::create_dir(&target)?;
     world.target = Some(target);
