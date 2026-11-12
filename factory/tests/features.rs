@@ -32,6 +32,16 @@ fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
     Ok(())
 }
 
+#[given("a seed describing a game of Tetris")]
+fn create_seed(world: &mut FactoryWorld) -> io::Result<()> {
+    let workspace = world.workspace.as_ref().unwrap();
+    let seed = workspace.path().join("seed.md");
+
+    fs::write(&seed, "Build a game of tetris in the terminal.\n")?;
+    world.seed = Some(seed);
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     FactoryWorld::cucumber()
