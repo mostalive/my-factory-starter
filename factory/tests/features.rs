@@ -47,6 +47,17 @@ fn create_seed(world: &mut FactoryWorld) -> io::Result<()> {
     Ok(())
 }
 
+
+#[given("the agent plans the tasks alpha and beta, and does one task a pass")]
+fn prepare_agent(world: &mut FactoryWorld) -> io::Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+
+    let pi = world.root().join("pi");
+    fs::write(&pi, include_str!("fixtures/pi.sh"))?;
+    fs::set_permissions(&pi, fs::Permissions::from_mode(0o755))?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     FactoryWorld::cucumber()
