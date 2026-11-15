@@ -10,3 +10,5 @@ bin/reference-factory
 # yx yak tracker state
 .yaks
 /node_modules/
+/factory/.pi/llm-metrics.log
+/target/
