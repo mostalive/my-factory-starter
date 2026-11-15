@@ -9,3 +9,4 @@ bin/reference-factory
 
 # yx yak tracker state
 .yaks
+/node_modules/
