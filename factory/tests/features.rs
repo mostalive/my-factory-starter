@@ -1,4 +1,4 @@
-use cucumber::{World as _, given, when};
+use cucumber::{World as _, given, when, then};
 use std::{fs, io, process::{Command, Output}};
 use tempfile::TempDir;
 
@@ -51,17 +51,37 @@ fn factory_runs_one_pass(world: &mut FactoryWorld) -> io::Result<()> {
     if let Some(seed) = &world.seed {
         command.arg("--seed").arg(seed);
     }
-    if let (Some(target)) = &world.target {
+    if let Some(target) = &world.target {
         command.arg("--target").arg(target);
     }
     world.output = Some(command.output()?);
    Ok(())
 }
 
-// #[then("it reports that there is no seed")]
-//fn reports_no_seed(world: &mut FactoryWorld) -> io::Result<()> {
+#[given("the seed has been deleted")]
+fn delete_seed(world: &mut FactoryWorld) -> io::Result<()> {
+    let seed = world.seed.as_ref().expect("no seed to delete");
 
-//}
+    fs::remove_file(seed)?;
+    Ok(())
+}
+
+#[then("it reports that there is no seed")]
+fn reports_no_seed(world: &mut FactoryWorld) -> io::Result<()> {
+    let output = world.output.as_ref().expect("the factory has not run");
+
+    assert!(
+        !output.status.success(),
+        "expected the factory to fail when there is no seed"
+    );
+
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        stderr.contains("seed"),
+        "expected the factory to report a missing seed, got: {stderr}"
+    );
+    Ok(())
+}
 
 #[given("a new target")]
 fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
