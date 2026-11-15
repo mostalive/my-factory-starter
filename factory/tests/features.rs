@@ -1,14 +1,14 @@
-use cucumber::{World as _, given};
-use std::{fs, io};
+use cucumber::{World as _, given, when};
+use std::{fs, io, process::{Command, Output}};
 use tempfile::TempDir;
+
 
 #[derive(Debug, Default, cucumber::World)]
 struct FactoryWorld {
     workspace: Option<TempDir>,
     target: Option<std::path::PathBuf>,
     seed: Option<std::path::PathBuf>,
-
-
+    output: Option<Output>
 }
 
 impl FactoryWorld {
@@ -28,6 +28,40 @@ fn copy_factory(world: &mut FactoryWorld) -> io::Result<()> {
     world.workspace = Some(workspace);
     Ok(())
 }
+
+#[given("no seed is chosen")]
+fn no_seed_is_chosen(world: &mut FactoryWorld)-> io::Result<()> {
+    world.seed = None;
+    Ok(())
+}
+
+#[given("no plan")]
+fn no_plan(world: &mut FactoryWorld ) -> io::Result<()> {
+    let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
+
+    assert!(!plan.exists(), "expected no plan at {}", plan.display());
+    Ok(())
+}
+
+#[when("the factory runs one pass")]
+fn factory_runs_one_pass(world: &mut FactoryWorld) -> io::Result<()> {
+    let mut command = Command::new(world.root().join("factory"));
+    command.current_dir(world.root());
+
+    if let Some(seed) = &world.seed {
+        command.arg("--seed").arg(seed);
+    }
+    if let (Some(target)) = &world.target {
+        command.arg("--target").arg(target);
+    }
+    world.output = Some(command.output()?);
+   Ok(())
+}
+
+// #[then("it reports that there is no seed")]
+//fn reports_no_seed(world: &mut FactoryWorld) -> io::Result<()> {
+
+//}
 
 #[given("a new target")]
 fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
