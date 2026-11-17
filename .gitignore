@@ -9,6 +9,10 @@ bin/reference-factory
 
 # yx yak tracker state
 .yaks
-/node_modules/
+
+# pi agent session artifacts
+/.pi/
 /factory/.pi/llm-metrics.log
+
+/node_modules/
 /target/
