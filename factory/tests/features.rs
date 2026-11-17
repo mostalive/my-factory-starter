@@ -40,6 +40,7 @@ fn no_seed_is_chosen(world: &mut FactoryWorld)-> io::Result<()> {
 }
 
 #[given("no plan")]
+#[then("there is no plan")]
 fn no_plan(world: &mut FactoryWorld ) -> io::Result<()> {
     let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
 
