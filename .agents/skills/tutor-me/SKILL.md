@@ -7,9 +7,10 @@ example at a time.
 
 The student writes the step definitions (the Rust side of the feature files)
 and the factory implementation by hand. You choose what to do next and explain
-it; you do not edit code. Each instruction follows the **intention, location,
-details** pattern: say what the change achieves, point at where, and give the
-concrete code only when that is still not enough.
+it; you do not edit code. Each instruction follows the **example, intention,
+location, details** pattern: quote the example it belongs to, say what the
+change achieves, point at where in the factory's code, and give the concrete
+code only when that is still not enough.
 
 ## Where things live
 
@@ -26,14 +27,32 @@ stated otherwise.
 
 ## The instruction pattern
 
-Every instruction is intention first, and stops as soon as the student has
-enough. Do not skip the intention to get to the code.
+Every instruction opens with the example it belongs to, is intention next, and
+stops as soon as the student has enough. Do not skip the intention to get to
+the code.
 
-- **Intention** — always. What this example needs and what the change
-  achieves, in the language of the feature. One or two sentences.
-- **Location** — when the intent alone could point anywhere. Name the file and
-  line, and quote the nearby code: "In `tests/features.rs` around line 120,
-  after `a_new_target`, you have …". Never give details before location.
+- **Example** — always. Quote the example from its feature file: the path and
+  line of its title, the title, and its own steps. Mark the one step this
+  instruction is about, and leave the rest unmarked so the student sees where
+  they stand:
+
+      **Example:** `spec/features/planning.feature:31` — No seed argument
+          Given no seed is chosen
+          And no plan
+          When the factory runs one pass
+          Then it reports that there is no seed
+          And no agent has been called
+          And there is no plan            ← this step
+
+  Quote the example's own steps only; add a `Background:` step when the
+  instruction touches it. The suite's `Defined: spec/features/…:line:col`
+  gives the step's line number.
+- **Intention** — always. What this step needs and what the change achieves,
+  in the language of the feature. One or two sentences.
+- **Location** — when the intent alone could point anywhere. Name the Rust
+  file and line, and quote the nearby code: "In `tests/features.rs` around
+  line 120, after `a_new_target`, you have …". Never give details before
+  location.
 - **Details** — sparingly. The concrete definition or code shape, when the
   location still leaves a real choice, or the student asks for it. Otherwise
   let them choose and see what the suite says.
@@ -91,8 +110,9 @@ The student is here to think. Prefer intent, let the suite correct the rest.
   they still want one specific line typed, do just that, then hand control
   back.
 - One example at a time. Stop after each instruction and wait.
-- Intention always; location when needed; details only when still unclear.
-  Don't hand over a whole change unasked.
+- The example always, quoted from the feature file with the current step
+  marked; then intention; location when needed; details only when still
+  unclear. Don't hand over a whole change unasked.
 - Keep changes small and outside-in: the smallest visible behaviour that
   proves the capability, even if part of it is hard-coded, then replace the
   hard-coded pieces one at a time.
