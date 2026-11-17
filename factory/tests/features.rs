@@ -15,6 +15,10 @@ impl FactoryWorld {
     fn root(&self) -> &std::path::Path {
         self.workspace.as_ref().unwrap().path()
     }
+
+    fn agent_calls(&self) -> std::path::PathBuf {
+        self.root().join("agent-calls")
+    }
 }
 #[given("a copy of the factory")]
 fn copy_factory(world: &mut FactoryWorld) -> io::Result<()> {
@@ -83,6 +87,18 @@ fn reports_no_seed(world: &mut FactoryWorld) -> io::Result<()> {
     Ok(())
 }
 
+#[then("no agent has been called")]
+fn no_agent_has_been_called(world: &mut FactoryWorld) -> io::Result<()> {
+    let calls = world.agent_calls();
+    let log = fs::read_to_string(&calls).unwrap_or_default();
+
+    assert!(
+        log.is_empty(),
+        "expected the agent never to be called, but it was called:\n{log}"
+    );
+    Ok(())
+}
+
 #[given("a new target")]
 fn new_target(world: &mut FactoryWorld) -> io::Result<()> {
     let target = world.root().join("target");
@@ -107,7 +123,10 @@ fn prepare_agent(world: &mut FactoryWorld) -> io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
 
     let pi = world.root().join("pi");
-    fs::write(&pi, include_str!("fixtures/pi.sh"))?;
+    let script = include_str!("fixtures/pi.sh")
+        .replace("@CALLS@", &world.agent_calls().display().to_string());
+
+    fs::write(&pi, script)?;
     fs::set_permissions(&pi, fs::Permissions::from_mode(0o755))?;
     Ok(())
 }

@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+printf 'called: %s\n' "$*" >> '@CALLS@'
+
 if [ ! -f .factory/plan.md ]; then
     mkdir -p .factory
     cat > .factory/plan.md <<'EOF'
