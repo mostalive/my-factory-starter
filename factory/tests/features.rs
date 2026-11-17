@@ -48,6 +48,14 @@ fn no_plan(world: &mut FactoryWorld ) -> io::Result<()> {
     Ok(())
 }
 
+#[then("there is a plan")]
+fn a_plan(world: &mut FactoryWorld ) -> io::Result<()> {
+    let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
+
+    assert!(plan.exists(), "expected plan at {}", plan.display());
+    Ok(())
+}
+
 #[when("the factory runs one pass")]
 fn factory_runs_one_pass(world: &mut FactoryWorld) -> io::Result<()> {
     let mut command = Command::new(world.root().join("factory"));

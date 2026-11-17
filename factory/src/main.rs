@@ -1,5 +1,6 @@
 use clap::Parser;
 use std::path::PathBuf;
+use std::process::Command;
 
 #[derive(Parser)]
 struct Args {
@@ -9,7 +10,7 @@ struct Args {
     target: PathBuf,
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let args = Args::parse();
 
     if !args.seed.exists() {
@@ -17,5 +18,7 @@ fn main() {
         std::process::exit(1);
     }
 
-    println!("factory not built yet");
+    Command::new("pi").current_dir(&args.target).status()?;
+
+    Ok(())
 }
