@@ -23,7 +23,7 @@ Open the agent at the repository root. The factory source, `spec/` and `ITERATIO
 5. For any iteration after 001, show the student what changed: `git show --stat HEAD`, and the diff of `factory/spec/FACTORY.md` from the repository root. That diff is how the factory's spec evolves.
 6. Give the student a concise sense of the bigger picture: What is the goal of this iteration, what will they be able to do with their factory when we're done with this iteration, and what will they learn about along the way. Ask the student if they understand, and encourage them to ask you for more details before proceeding.
 7. If there is a suite, run it, leaving out the `@real-agent` examples, and show which examples now fail or have undefined steps. That is the work for this iteration: steps keep their words between iterations unless their meaning changed.
-8. Tell the student to say "coach me" to work through it step by step. Or, if they want you to build it, they can use `implement-it` (you build it, then demo it) or `implement-fast` (you just build it).
+8. Tell the student to say "tutor me" to work through it one example at a time, or "coach me" to work through the whole iteration with guidance. Or, if they want you to build it, they can use `implement-it` (you build it, then demo it) or `implement-fast` (you just build it).
 
 ## Rules
 

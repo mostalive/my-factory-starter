@@ -361,7 +361,7 @@ in your shell's startup file). You're ready when `bin/doctor` reports
   puts it on your `PATH`, and installs the ACP adapters for Claude Code
   and Codex.
 - `.agents/skills/`: the skills `use-reference-factory`, `fetch-iteration`,
-  `set-up-factory`, `coach-me`, `implement-it` and `implement-fast`.
+  `set-up-factory`, `coach-me`, `tutor-me`, `implement-it` and `implement-fast`.
 
 ### Run your first factory
 

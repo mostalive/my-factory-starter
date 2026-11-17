@@ -41,7 +41,7 @@ Follow this process exactly:
    - For "pi has been called", put a fake `pi` first on the `PATH` that logs its call and answers something harmless.
 8. Add a "Checks" section to the repository-root `AGENTS.md`, saying in one or two lines how to run the suite. Other agents will look there first.
 9. Commit with message `Set up the factory project`.
-10. Hand back to the skill that called this one, or tell the student to say "coach me".
+10. Hand back to the skill that called this one, or tell the student to say "tutor me" to work through the spec one example at a time, or "coach me" to work through the whole iteration.
 
 Rules:
 
