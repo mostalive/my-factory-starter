@@ -56,6 +56,25 @@ fn a_plan(world: &mut FactoryWorld ) -> io::Result<()> {
     Ok(())
 }
 
+#[then("the plan shows every task as not done")] 
+fn plan_shows_every_task_as_not_done(world: &mut FactoryWorld) -> io::Result<()> {
+    let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
+
+    let plan_contents = fs::read_to_string(&plan)?;
+
+    let tasks: Vec<&str> = plan_contents
+        .lines()
+        .filter(|line| !line.trim().is_empty())
+        .collect();
+        
+    assert!(!tasks.is_empty(), "expected at least one task in {}", plan.display());
+
+    for task in &tasks {
+        assert!(task.contains("- [ ]"), "expected a task not done, got: {task}")
+    }
+    Ok(())
+}
+
 #[when("the factory runs one pass")]
 fn factory_runs_one_pass(world: &mut FactoryWorld) -> io::Result<()> {
 
