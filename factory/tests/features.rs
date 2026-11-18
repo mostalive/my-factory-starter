@@ -69,9 +69,10 @@ fn plan_shows_every_task_as_not_done(world: &mut FactoryWorld) -> io::Result<()>
         
     assert!(!tasks.is_empty(), "expected at least one task in {}", plan.display());
 
-    for task in &tasks {
-        assert!(task.contains("- [ ]"), "expected a task not done, got: {task}")
-    }
+    let non_tasks: Vec<&str> = tasks.into_iter().filter(|line| !line.contains("- [ ]")).collect();
+
+    assert!(non_tasks.is_empty(), "expected all non-empty lines to be not done tasks '- [ ]', but got: {} ",
+            plan.display());
     Ok(())
 }
 
