@@ -59,18 +59,11 @@ fn a_plan(world: &mut FactoryWorld ) -> io::Result<()> {
 #[then("the plan shows every task as not done")] 
 fn plan_shows_every_task_as_not_done(world: &mut FactoryWorld) -> io::Result<()> {
     let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
-
     let plan_contents = fs::read_to_string(&plan)?;
+    let tasks: Vec<&str> = plan_contents .lines().filter(|line| !line.trim().is_empty()).collect();
 
-    let tasks: Vec<&str> = plan_contents
-        .lines()
-        .filter(|line| !line.trim().is_empty())
-        .collect();
-        
     assert!(!tasks.is_empty(), "expected at least one task in {}", plan.display());
-
     let non_tasks: Vec<&str> = tasks.into_iter().filter(|line| !line.contains("- [ ]")).collect();
-
     assert!(non_tasks.is_empty(), "expected all non-empty lines to be not done tasks '- [ ]', but got: {} ",
             plan.display());
     Ok(())
