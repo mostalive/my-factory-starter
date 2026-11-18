@@ -16,3 +16,6 @@ bin/reference-factory
 
 /node_modules/
 /target/
+
+# Neovim log files
+.nvimlog
