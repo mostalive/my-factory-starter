@@ -20,5 +20,21 @@ fn main() -> std::io::Result<()> {
 
     Command::new("pi").current_dir(&args.target).status()?;
 
+    let in_repo = Command::new("git")
+        .args(["rev-parse", "--git-dir"])
+        .current_dir(&args.target)
+        .status()?
+        .success();
+
+    if !in_repo {
+        Command::new("git")
+            .arg("init")
+            .current_dir(&args.target)
+            .status()?;
+    }
+    
     Ok(())
 }
+
+
+
