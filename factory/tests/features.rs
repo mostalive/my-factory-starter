@@ -1,4 +1,4 @@
-use cucumber::{World as _, given, when, then};
+use cucumber::{World as _, cli, given, when, then};
 use std::{fs, io, process::{Command, Output}};
 use tempfile::TempDir;
 
@@ -144,6 +144,7 @@ fn prepare_agent(world: &mut FactoryWorld) -> io::Result<()> {
 async fn main() {
     FactoryWorld::cucumber()
         .fail_on_skipped()
+        .with_cli(cli::Opts::<_, _, _, cli::Empty>::parsed())
         .filter_run_and_exit("spec/features", |feature, rule, scenario| {
             let real_agent = feature
                 .tags

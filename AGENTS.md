@@ -35,3 +35,8 @@ If your harness doesn't load skills, read the skill's `SKILL.md` and follow it.
 
 From `factory/`, run `cargo test --test features` (excludes `@real-agent`).
 To run real-agent examples explicitly: `cargo test --test features --features real-agent`.
+
+From the repository root, the `Makefile` wraps those: `make test` runs every
+feature, `make focus` runs only the example named in its `FOCUS` variable
+(override with `make focus FOCUS="..."`), and `make real` includes the
+`@real-agent` examples.
