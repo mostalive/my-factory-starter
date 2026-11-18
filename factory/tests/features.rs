@@ -69,6 +69,39 @@ fn plan_shows_every_task_as_not_done(world: &mut FactoryWorld) -> io::Result<()>
     Ok(())
 }
 
+#[then("there are no new work commits")]
+fn no_new_work_commits(world: &mut FactoryWorld) -> io::Result<()> {
+    let work: Vec<String> = changed_files(world)
+        .into_iter()
+        .filter(|path| path != ".factory/plan.md")
+        .collect();
+
+    assert!(work.is_empty(), "expected no work commits, but found: {work:?}");
+    Ok(())
+}
+
+#[then("the committed plan matches the plan on disk")]
+fn committed_plan_matches_plan_on_disk(world: &mut FactoryWorld) -> io::Result<()> {
+    let target = world.target.as_ref().unwrap();
+
+    let committed = Command::new("git")
+        .current_dir(target)
+        .args(["show", "HEAD:.factory/plan.md"])
+        .output()?;
+    assert!(
+        committed.status.success(),
+        "expected the plan to be committed, but git show said: {}",
+        String::from_utf8_lossy(&committed.stderr)
+    );
+
+    let on_disk = fs::read(target.join(".factory/plan.md"))?;
+    assert_eq!(
+        committed.stdout, on_disk,
+        "committed plan differs from the plan on disk"
+    );
+    Ok(())
+}
+
 #[when("the factory runs one pass")]
 fn factory_runs_one_pass(world: &mut FactoryWorld) -> io::Result<()> {
 
@@ -172,3 +205,20 @@ async fn main() {
         })
         .await;
 }
+
+fn changed_files(world: &FactoryWorld) -> Vec<String> {
+    let target = world.target.as_ref().unwrap();
+    let out = Command::new("git")
+        .current_dir(target)
+        .args(["log", "--format=", "--name-only"])
+        .output()
+        .expect("git did not run");
+    if !out.status.success() {
+        return Vec::new();          // no repository yet, so no commits
+    }
+    String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter(|line| !line.is_empty()
+        ).map(str::to_string)
+         .collect()
+}                 
