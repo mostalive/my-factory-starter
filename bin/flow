@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""Render factory/stats/runs.jsonl as a cumulative flow diagram.
+
+Every full `make test` appends one line to `factory/stats/runs.jsonl`. This
+script turns those lines into `factory/stats/flow.svg`: a stacked area chart of
+passed vs open steps, the same for examples, and the median number of open
+steps per example over time.
+
+Run it from anywhere: `bin/flow` (or `make flow`).
+"""
+
+import json
+import math
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+RUNS = ROOT / "factory" / "stats" / "runs.jsonl"
+OUT = ROOT / "factory" / "stats" / "flow.svg"
+
+GREEN = "#2e7d32"
+RED = "#c62828"
+BLUE = "#1565c0"
+INK = "#202124"
+MUTED = "#5f6368"
+GRID = "#e8eaed"
+
+
+def load_runs():
+    if not RUNS.exists():
+        sys.exit(f"flow: no runs yet ({RUNS}); run `make test` first")
+    runs = []
+    with RUNS.open(encoding="utf-8") as lines:
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            run = json.loads(line)
+            if not run.get("filtered", False):
+                runs.append(run)
+    if not runs:
+        sys.exit(f"flow: no full runs in {RUNS}; run `make test`, not `make focus`")
+    return runs
+
+
+def text(x, y, body, size=12, fill=INK, anchor="start", weight="normal"):
+    return (
+        f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size}" fill="{fill}" '
+        f'text-anchor="{anchor}" font-weight="{weight}" '
+        f'font-family="ui-sans-serif,system-ui,sans-serif">{body}</text>'
+    )
+
+
+def panel(x, y, w, h, title, runs, series, unit, color_bottom=GREEN, color_top=RED):
+    """One stacked area panel: series[i] = (label, passed, open)."""
+    out = [text(x, y - 14, title, size=15, weight="600")]
+    if not runs:
+        return "".join(out)
+
+    top = max((passed + open) for _, passed, open in series) or 1
+    top = nice_max(top)
+
+    def y_of(value):
+        return y + h - (value / top) * h
+
+    n = len(runs)
+    xs = [x + (w * i / (n - 1) if n > 1 else 0.0) for i in range(n)]
+
+    # Grid and y labels.
+    for tick in range(0, 5):
+        value = top * tick / 4
+        gy = y_of(value)
+        out.append(
+            f'<line x1="{x}" y1="{gy:.1f}" x2="{x + w}" y2="{gy:.1f}" '
+            f'stroke="{GRID}" stroke-width="1"/>'
+        )
+        out.append(text(x - 6, gy + 4, f"{value:.0f}", size=11, fill=MUTED, anchor="end"))
+
+    # Stacked bands: passed from the baseline, open from passed up to the total.
+    bottom_pts = [(xs[i], y_of(passed)) for i, (_, passed, _) in enumerate(series)]
+    top_pts = [
+        (xs[i], y_of(passed + open)) for i, (_, passed, open) in enumerate(series)
+    ]
+    bands = [
+        ([(xs[0], y + h), *bottom_pts, (xs[-1], y + h)], color_bottom,
+         bottom_pts, unit[0]),
+        ([*bottom_pts, *reversed(top_pts)], color_top, top_pts, unit[1]),
+    ]
+    for area, color, border, name in bands:
+        path = "M " + " L ".join(f"{px:.1f},{py:.1f}" for px, py in area) + " Z"
+        out.append(f'<path d="{path}" fill="{color}" fill-opacity="0.22"/>')
+        path = "M " + " L ".join(f"{px:.1f},{py:.1f}" for px, py in border)
+        out.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2"/>')
+
+    # Baseline.
+    out.append(
+        f'<line x1="{x}" y1="{y + h}" x2="{x + w}" y2="{y + h}" '
+        f'stroke="{MUTED}" stroke-width="1"/>'
+    )
+
+    # Legend: latest values.
+    latest = series[-1]
+    legend = [
+        (color_top, f"{unit[1]} {latest[2]}"),
+        (color_bottom, f"{unit[0]} {latest[1]}"),
+    ]
+    lx = x + w
+    for color, label in reversed(legend):
+        width = 8 * len(label) + 16
+        lx -= width
+        out.append(
+            f'<rect x="{lx}" y="{y - 30}" width="10" height="10" fill="{color}" '
+            f'fill-opacity="0.7"/>'
+        )
+        out.append(text(lx + 15, y - 21, label, size=12, fill=MUTED))
+
+    out.append(x_labels(xs, runs, y + h + 18, n))
+    return "".join(out)
+
+
+def line_panel(x, y, w, h, title, runs, values):
+    out = [text(x, y - 14, title, size=15, weight="600")]
+    if not runs:
+        return "".join(out)
+
+    top = nice_max(max(values) or 1)
+
+    def y_of(value):
+        return y + h - (value / top) * h
+
+    n = len(runs)
+    xs = [x + (w * i / (n - 1) if n > 1 else 0.0) for i in range(n)]
+
+    for tick in range(0, 5):
+        value = top * tick / 4
+        gy = y_of(value)
+        out.append(
+            f'<line x1="{x}" y1="{gy:.1f}" x2="{x + w}" y2="{gy:.1f}" '
+            f'stroke="{GRID}" stroke-width="1"/>'
+        )
+        out.append(text(x - 6, gy + 4, f"{value:.1f}", size=11, fill=MUTED, anchor="end"))
+
+    points = [(xs[i], y_of(value)) for i, value in enumerate(values)]
+    path = "M " + " L ".join(f"{px:.1f},{py:.1f}" for px, py in points)
+    out.append(f'<path d="{path}" fill="none" stroke="{BLUE}" stroke-width="2"/>')
+    for px, py in points:
+        out.append(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="2.5" fill="{BLUE}"/>')
+
+    out.append(
+        f'<line x1="{x}" y1="{y + h}" x2="{x + w}" y2="{y + h}" '
+        f'stroke="{MUTED}" stroke-width="1"/>'
+    )
+    out.append(
+        text(x + w, y - 21, f"now {values[-1]:.1f}", size=12, fill=MUTED,
+             anchor="end")
+    )
+
+    out.append(x_labels(xs, runs, y + h + 18, n))
+    return "".join(out)
+
+
+def x_labels(xs, runs, y, n):
+    """Date labels, thinned out and kept inside the panel."""
+    step = max(1, math.ceil(n / 6))
+    out = []
+    for i in range(0, n, step):
+        anchor = "middle"
+        if i == 0:
+            anchor = "start"
+        elif i + step >= n and n > 1:
+            anchor = "end"
+        out.append(text(xs[i], y, stamp(runs[i].get("at", "")), size=11,
+                        fill=MUTED, anchor=anchor))
+    return "".join(out)
+
+
+def stamp(at):
+    """`2026-11-18T14:45:29Z` -> `11-18 14:45`."""
+    if len(at) >= 16:
+        return at[5:10] + " " + at[11:16]
+    return at
+
+
+def nice_max(value):
+    magnitude = 10 ** math.floor(math.log10(value))
+    for factor in (1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 7.5, 10):
+        if value <= factor * magnitude:
+            return factor * magnitude
+    return 10 * magnitude
+
+
+def main():
+    runs = load_runs()
+    latest = runs[-1]
+
+    width, height = 1240, 860
+    left, right = 70, 30
+    plot_w = width - left - right
+
+    steps = [
+        ("steps", run.get("steps_passed", 0), run.get("steps_open", 0))
+        for run in runs
+    ]
+    examples = [
+        (
+            "examples",
+            run.get("examples", 0) - run.get("examples_open", 0),
+            run.get("examples_open", 0),
+        )
+        for run in runs
+    ]
+    medians = [float(run.get("median_open_steps", 0)) for run in runs]
+
+    svg = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
+        f'height="{height}" viewBox="0 0 {width} {height}">',
+        f'<rect width="{width}" height="{height}" fill="white"/>',
+        text(left, 30, "Factory cumulative flow", size=20, weight="600"),
+        text(
+            left,
+            50,
+            f"{len(runs)} full runs · {latest.get('iteration', '?')} · "
+            f"{latest.get('steps_open', 0)} open steps in "
+            f"{latest.get('examples_open', 0)} open examples",
+            size=13,
+            fill=MUTED,
+        ),
+        panel(
+            left, 100, plot_w, 300, "Steps (passed vs open)", runs, steps,
+            ("passed", "open"),
+        ),
+        panel(
+            left, 490, plot_w * 0.52 - 30, 250, "Examples (done vs open)", runs,
+            examples, ("done", "open"),
+        ),
+        line_panel(
+            left + plot_w * 0.52 + 30, 490, plot_w * 0.48 - 20, 250,
+            "Median open steps per example", runs, medians,
+        ),
+        "</svg>",
+    ]
+
+    OUT.write_text("\n".join(svg) + "\n", encoding="utf-8")
+    print(f"flow: wrote {OUT.relative_to(ROOT)} from {len(runs)} runs")
+
+
+if __name__ == "__main__":
+    main()

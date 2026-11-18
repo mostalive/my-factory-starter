@@ -40,3 +40,9 @@ From the repository root, the `Makefile` wraps those: `make test` runs every
 feature, `make focus` runs only the example named in its `FOCUS` variable
 (override with `make focus FOCUS="..."`), and `make real` includes the
 `@real-agent` examples.
+
+Every full run also prints how many steps are open (not yet passing) per
+example, rewrites `factory/stats/steps.md`, and appends a point to
+`factory/stats/runs.jsonl`. `make flow` renders those runs as
+`factory/stats/flow.svg`: passed vs open steps and examples, plus the median
+open steps per example. Commit the `factory/stats/` files to keep the history.

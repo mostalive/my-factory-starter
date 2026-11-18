@@ -1,6 +1,9 @@
-use cucumber::{World as _, cli, given, when, then};
+use cucumber::{World as _, cli, given, when, then, writer, WriterExt as _};
 use std::{fs, io, process::{Command, Output}};
 use tempfile::TempDir;
+
+#[path = "support/stats.rs"]
+mod stats;
 
 
 #[derive(Debug, Default, cucumber::World)]
@@ -192,6 +195,10 @@ fn prepare_agent(world: &mut FactoryWorld) -> io::Result<()> {
 #[tokio::main]
 async fn main() {
     FactoryWorld::cucumber()
+        .with_writer(writer::Normalize::new(writer::Tee::new(
+            writer::Basic::stdout::<FactoryWorld>().summarized(),
+            stats::StepStats::new(),
+        )))
         .fail_on_skipped()
         .with_cli(cli::Opts::<_, _, _, cli::Empty>::parsed())
         .filter_run_and_exit("spec/features", |feature, rule, scenario| {
