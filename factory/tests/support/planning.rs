@@ -1,7 +1,8 @@
 //! Steps for `planning.feature`: how the plan is made and who keeps it true.
 
 use std::{fs, io, process::Command};
-
+use std::path::Path;
+    
 use cucumber::{given, then};
 
 use crate::FactoryWorld;
@@ -82,6 +83,13 @@ fn committed_plan_matches_plan_on_disk(world: &mut FactoryWorld) -> io::Result<(
     Ok(())
 }
 
+#[then("the target has no uncommitted changes")]
+fn target_has_no_uncommited_changes(world: &mut FactoryWorld) -> io::Result<()> {
+    let status = status(&world.target.as_ref().unwrap());
+    assert!(status.is_empty(), "Expected `git status` to have no uncommited files, but got {:?}", status);
+    Ok(())
+}
+
 #[given("the seed has been deleted")]
 fn delete_seed(world: &mut FactoryWorld) -> io::Result<()> {
     let seed = world.seed.as_ref().expect("no seed to delete");
@@ -122,4 +130,14 @@ fn changed_files(world: &FactoryWorld) -> Vec<String> {
         .filter(|line| !line.is_empty())
         .map(str::to_string)
         .collect()
+}
+
+fn status(repo: &Path) -> Vec<u8> {
+    Command::new("git")
+        .current_dir(repo)
+        .args(["status", "--porcelain=v1", "-z", "--untracked-files=all"])
+        .output()
+        .expect("git did not run")
+        .stdout
+
 }
