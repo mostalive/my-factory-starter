@@ -58,7 +58,10 @@ fn a_plan(world: &mut FactoryWorld ) -> io::Result<()> {
 
 #[when("the factory runs one pass")]
 fn factory_runs_one_pass(world: &mut FactoryWorld) -> io::Result<()> {
+
     let mut command = Command::new(world.root().join("factory"));
+    command.env("PATH", format!("{}:{}", world.root().display(),
+                                std::env::var("PATH").unwrap_or_default()));
     command.current_dir(world.root());
 
     if let Some(seed) = &world.seed {
