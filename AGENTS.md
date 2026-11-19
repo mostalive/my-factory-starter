@@ -45,4 +45,6 @@ Every full run also prints how many steps are open (not yet passing) per
 example, rewrites `factory/stats/steps.md`, and appends a point to
 `factory/stats/runs.jsonl`. `make flow` renders those runs as
 `factory/stats/flow.svg`: passed vs open steps and examples, plus the median
-open steps per example. Commit the `factory/stats/` files to keep the history.
+open steps per example. Commit `factory/stats/steps.md` and
+`factory/stats/runs.jsonl` to keep the history; `flow.svg` is generated, so
+leave it out of Git.

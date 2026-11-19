@@ -10,12 +10,18 @@ bin/reference-factory
 # yx yak tracker state
 .yaks
 
+# Generated from factory/stats/runs.jsonl by `make flow`.
+factory/stats/flow.svg
+
 # pi agent session artifacts
 /.pi/
 /factory/.pi/llm-metrics.log
 
 /node_modules/
 /target/
+
+# Vim swap files
+*.swp
 
 # Neovim log files
 .nvimlog
