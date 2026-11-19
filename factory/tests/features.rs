@@ -29,6 +29,11 @@ impl FactoryWorld {
         self.target.as_ref().unwrap().join(".factory/plan.md")
     }
 
+    fn ensure_factory_path(&self) -> std::io::Result<()> {
+        let factory = self.target.as_ref().unwrap().join(".factory");
+        return fs::create_dir(&factory);
+    }
+
     fn plan_contents(&self) -> std::io::Result<String> {
         return fs::read_to_string(self.plan_path());
     }

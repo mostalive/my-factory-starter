@@ -13,14 +13,13 @@ fn no_seed_is_chosen(world: &mut FactoryWorld) -> io::Result<()> {
     Ok(())
 }
 
+const THREE_TASK_PLAN: &str = "- [ ] task 1\n- [ ] task 2\n- [ ] task 3";
+
 #[given("a plan with three tasks, none of them done")]
 fn a_plan_with_three_tasks_none_done(world: &mut FactoryWorld) -> io::Result<()> {
+    world.ensure_factory_path()?;
     let plan_path = world.plan_path();
-    let plan_contents = "- [ ] task 1
-- [ ] task 2
-- [ ] task 3";
-
-    fs::write(&plan_path, &plan_contents)?;
+    fs::write(&plan_path, &THREE_TASK_PLAN)?;
 
     Ok(())
 }
