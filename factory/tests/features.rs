@@ -24,6 +24,14 @@ impl FactoryWorld {
     fn agent_calls(&self) -> std::path::PathBuf {
         self.root().join("agent-calls")
     }
+
+    fn plan_path(&self) -> std::path::PathBuf {
+        self.target.as_ref().unwrap().join(".factory/plan.md")
+    }
+
+    fn plan_contents(&self) -> std::io::Result<String> {
+        return fs::read_to_string(self.plan_path());
+    }
 }
 #[given("a copy of the factory")]
 fn copy_factory(world: &mut FactoryWorld) -> io::Result<()> {

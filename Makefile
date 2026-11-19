@@ -12,7 +12,7 @@ FACTORY := factory
 CARGO   := cargo test --manifest-path $(FACTORY)/Cargo.toml --test features
 
 # The example you're working on. Update as you make progress.
-FOCUS ?= A seed with no plan yet
+FOCUS ?= A plan already exists
 
 .PHONY: test focus real flow
 

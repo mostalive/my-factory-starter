@@ -13,9 +13,21 @@ fn no_seed_is_chosen(world: &mut FactoryWorld) -> io::Result<()> {
     Ok(())
 }
 
+#[given("a plan with three tasks, none of them done")]
+fn a_plan_with_three_tasks_none_done(world: &mut FactoryWorld) -> io::Result<()> {
+    let plan_path = world.plan_path();
+    let plan_contents = "- [ ] task 1
+- [ ] task 2
+- [ ] task 3";
+
+    fs::write(&plan_path, &plan_contents)?;
+
+    Ok(())
+}
+
 #[then("there is a plan")]
 fn a_plan(world: &mut FactoryWorld) -> io::Result<()> {
-    let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
+    let plan = world.plan_path();
 
     assert!(plan.exists(), "expected plan at {}", plan.display());
     Ok(())
@@ -23,9 +35,9 @@ fn a_plan(world: &mut FactoryWorld) -> io::Result<()> {
 
 #[then("the plan shows every task as not done")]
 fn plan_shows_every_task_as_not_done(world: &mut FactoryWorld) -> io::Result<()> {
-    let plan = world.target.as_ref().unwrap().join(".factory/plan.md");
-    let plan_contents = fs::read_to_string(&plan)?;
-    let tasks: Vec<&str> = plan_contents
+    let plan = world.plan_path();
+    let contents = world.plan_contents()?;
+    let tasks: Vec<&str> = contents
         .lines()
         .filter(|line| !line.trim().is_empty())
         .collect();
@@ -39,6 +51,7 @@ fn plan_shows_every_task_as_not_done(world: &mut FactoryWorld) -> io::Result<()>
         .into_iter()
         .filter(|line| !line.contains("- [ ]"))
         .collect();
+
     assert!(
         non_tasks.is_empty(),
         "expected all non-empty lines to be not done tasks '- [ ]', but got: {} ",
