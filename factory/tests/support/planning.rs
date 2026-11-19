@@ -95,6 +95,12 @@ fn committed_plan_matches_plan_on_disk(world: &mut FactoryWorld) -> io::Result<(
     Ok(())
 }
 
+#[then("the plan still has those three tasks")]
+fn plan_still_has_three_tasks(world: &mut FactoryWorld) -> io::Result<()> {
+    assert_eq!(world.plan_contents()?, THREE_TASK_PLAN);
+    Ok(())
+}
+
 #[then("the target has no uncommitted changes")]
 fn target_has_no_uncommited_changes(world: &mut FactoryWorld) -> io::Result<()> {
     let status = status(&world.target.as_ref().unwrap());
